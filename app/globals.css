@@ -40,8 +40,44 @@ h1 {
 
 .subtitle {
   color: var(--muted);
-  margin: 0 0 32px 0;
+  margin: 0 0 24px 0;
   font-size: 1rem;
+}
+
+.personality-toggle {
+  display: inline-flex;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  margin-bottom: 16px;
+  gap: 2px;
+}
+
+.personality-pill {
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.personality-pill:hover:not(:disabled):not(.active) {
+  color: var(--fg);
+}
+
+.personality-pill.active {
+  background: var(--accent);
+  color: white;
+}
+
+.personality-pill:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 form {
@@ -113,13 +149,54 @@ button:disabled {
   border-radius: 12px;
   padding: 20px 24px;
   margin-top: 8px;
-  white-space: pre-wrap;
   min-height: 60px;
 }
 
 .answer.error {
   border-color: var(--error);
   color: var(--error);
+}
+
+.answer .placeholder {
+  color: var(--muted);
+}
+
+.answer p {
+  margin: 0 0 0.75em 0;
+}
+
+.answer p:last-child {
+  margin-bottom: 0;
+}
+
+.answer ul,
+.answer ol {
+  margin: 0.5em 0 0.75em 0;
+  padding-left: 1.4em;
+}
+
+.answer li {
+  margin-bottom: 0.25em;
+}
+
+.answer strong {
+  font-weight: 600;
+}
+
+.answer em {
+  font-style: italic;
+}
+
+.answer a {
+  color: var(--accent);
+}
+
+.answer code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+  background: var(--accent-bg);
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .followups {
