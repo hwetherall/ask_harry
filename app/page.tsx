@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { AnswerMarkdown } from "@/components/AnswerMarkdown";
 import { parseStream, FOLLOWUPS_SENTINEL } from "@/lib/parseStream";
 import {
   PERSONALITIES,
@@ -172,7 +172,7 @@ export default function Page() {
       ) : showAnswer || isLoading ? (
         <div className="answer">
           {visibleAnswer ? (
-            <ReactMarkdown>{visibleAnswer}</ReactMarkdown>
+            <AnswerMarkdown text={visibleAnswer} />
           ) : (
             <span className="placeholder">…</span>
           )}
