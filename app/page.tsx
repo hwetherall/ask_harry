@@ -1,15 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { AnswerMarkdown } from "@/components/AnswerMarkdown";
 import { parseStream, FOLLOWUPS_SENTINEL } from "@/lib/parseStream";
 import {
-  PERSONALITIES,
-  PERSONALITY_ORDER,
-  DEFAULT_PERSONALITY,
-  isPersonalityKey,
-  type PersonalityKey,
-} from "@/lib/personalities";
+  VISIBLE_MODES,
+  DEFAULT_MODE,
+  PERSONA_PRESETS,
+  PERSONA_PRESET_ORDER,
+  MAX_PERSONA_LENGTH,
+  type Mode,
+} from "@/lib/modes";
 
 const EXAMPLES = [
   "What are Harry's biggest interests?",
@@ -17,36 +18,47 @@ const EXAMPLES = [
   "What's Harry been up to recently?",
 ];
 
-const PERSONALITY_STORAGE_KEY = "ask-harry:personality";
-
 export default function Page() {
   const [question, setQuestion] = useState("");
   const [streamedText, setStreamedText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [personality, setPersonality] = useState<PersonalityKey>(DEFAULT_PERSONALITY);
+
+  // Voice selection lives in React state only — it resets to the default on
+  // reload (no storage APIs, per spec).
+  const [mode, setMode] = useState<Mode>(DEFAULT_MODE);
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+  const [customPersona, setCustomPersona] = useState("");
   const abortRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    const saved = localStorage.getItem(PERSONALITY_STORAGE_KEY);
-    if (isPersonalityKey(saved)) {
-      setPersonality(saved);
-    }
-  }, []);
+  // The persona actually sent to the API: a chosen preset name wins, otherwise
+  // the trimmed custom text. Empty in persona mode means "nothing chosen yet".
+  const effectivePersona = useMemo(() => {
+    if (selectedPreset) return PERSONA_PRESETS[selectedPreset].name;
+    return customPersona.trim();
+  }, [selectedPreset, customPersona]);
 
-  const choosePersonality = (key: PersonalityKey) => {
-    setPersonality(key);
-    try {
-      localStorage.setItem(PERSONALITY_STORAGE_KEY, key);
-    } catch {
-      // localStorage may be unavailable (private browsing); silently fall back to in-memory.
-    }
+  const personaMissing = mode === "persona" && effectivePersona.length === 0;
+
+  const chooseMode = (next: Mode) => {
+    setMode(next);
+  };
+
+  const choosePreset = (key: string) => {
+    setSelectedPreset(key);
+    setCustomPersona("");
+  };
+
+  const onCustomChange = (value: string) => {
+    setCustomPersona(value);
+    setSelectedPreset(null);
   };
 
   const ask = useCallback(
     async (q: string) => {
       if (!q.trim() || isLoading) return;
+      if (mode === "persona" && effectivePersona.length === 0) return;
       setQuestion(q);
       setStreamedText("");
       setErrorMsg(null);
@@ -60,7 +72,11 @@ export default function Page() {
         const res = await fetch("/api/ask", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ question: q, personality }),
+          body: JSON.stringify({
+            question: q,
+            mode,
+            persona: mode === "persona" ? effectivePersona : undefined,
+          }),
           signal: ctrl.signal,
         });
 
@@ -93,7 +109,7 @@ export default function Page() {
         setIsLoading(false);
       }
     },
-    [isLoading, personality],
+    [isLoading, mode, effectivePersona],
   );
 
   const onSubmit = (e: React.FormEvent) => {
@@ -116,25 +132,61 @@ export default function Page() {
         <a href="https://harrywetherall.com">harrywetherall.com</a>.
       </p>
 
-      <div className="personality-toggle" role="tablist" aria-label="Voice">
-        {PERSONALITY_ORDER.map((key) => {
-          const p = PERSONALITIES[key];
-          const active = key === personality;
+      <div className="mode-toggle" role="tablist" aria-label="Answer mode">
+        {VISIBLE_MODES.map((m) => {
+          const active = m.key === mode;
           return (
             <button
-              key={key}
+              key={m.key}
               type="button"
               role="tab"
               aria-selected={active}
-              className={`personality-pill${active ? " active" : ""}`}
-              onClick={() => choosePersonality(key)}
+              className={`mode-pill${active ? " active" : ""}`}
+              onClick={() => chooseMode(m.key)}
               disabled={isLoading}
             >
-              {p.label}
+              {m.label}
             </button>
           );
         })}
       </div>
+
+      {mode === "persona" && (
+        <div className="persona-picker">
+          <div
+            className="persona-presets"
+            role="group"
+            aria-label="Persona presets"
+          >
+            {PERSONA_PRESET_ORDER.map((key) => {
+              const preset = PERSONA_PRESETS[key];
+              const active = selectedPreset === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={active}
+                  className={`persona-chip${active ? " active" : ""}`}
+                  onClick={() => choosePreset(key)}
+                  disabled={isLoading}
+                >
+                  {preset.name}
+                </button>
+              );
+            })}
+          </div>
+          <input
+            type="text"
+            className="persona-custom"
+            value={customPersona}
+            onChange={(e) => onCustomChange(e.target.value)}
+            placeholder="…or make your own (e.g. a pirate)"
+            maxLength={MAX_PERSONA_LENGTH}
+            disabled={isLoading}
+            aria-label="Custom persona"
+          />
+        </div>
+      )}
 
       <form onSubmit={onSubmit}>
         <input
@@ -145,10 +197,17 @@ export default function Page() {
           maxLength={500}
           disabled={isLoading}
         />
-        <button type="submit" disabled={isLoading || !question.trim()}>
+        <button
+          type="submit"
+          disabled={isLoading || !question.trim() || personaMissing}
+        >
           {isLoading ? "Thinking…" : "Ask"}
         </button>
       </form>
+
+      {personaMissing && !isLoading && (
+        <p className="persona-hint">Pick a persona above (or make your own).</p>
+      )}
 
       {!hasAnswered && !isLoading && (
         <p className="cold-start-note">

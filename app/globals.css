@@ -44,7 +44,7 @@ h1 {
   font-size: 1rem;
 }
 
-.personality-toggle {
+.mode-toggle {
   display: inline-flex;
   background: white;
   border: 1px solid var(--border);
@@ -54,7 +54,7 @@ h1 {
   gap: 2px;
 }
 
-.personality-pill {
+.mode-pill {
   background: transparent;
   color: var(--muted);
   border: none;
@@ -66,18 +66,81 @@ h1 {
   transition: background 0.15s, color 0.15s;
 }
 
-.personality-pill:hover:not(:disabled):not(.active) {
+.mode-pill:hover:not(:disabled):not(.active) {
   color: var(--fg);
 }
 
-.personality-pill.active {
+.mode-pill.active {
   background: var(--accent);
   color: white;
 }
 
-.personality-pill:disabled {
+.mode-pill:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.persona-picker {
+  margin: -4px 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.persona-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.persona-chip {
+  background: white;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.persona-chip:hover:not(:disabled):not(.active) {
+  border-color: var(--accent);
+}
+
+.persona-chip.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.persona-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.persona-custom {
+  width: 100%;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 0.92rem;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+}
+
+.persona-custom:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.persona-hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: -4px 0 12px 0;
 }
 
 form {

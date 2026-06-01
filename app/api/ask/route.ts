@@ -5,18 +5,27 @@ import type { Post } from "@/lib/types";
 import { buildCorpusPrefix } from "@/lib/buildCorpusPrefix";
 import { validateQuestion } from "@/lib/validateQuestion";
 import { rateLimit } from "@/lib/rateLimit";
+import { buildSystemMessage } from "@/lib/systemPrompt";
 import {
-  buildSystemMessage,
-  isPersonalityKey,
-  DEFAULT_PERSONALITY,
-  type PersonalityKey,
-} from "@/lib/personalities";
+  buildModeInstruction,
+  resolvePersona,
+  isMode,
+  DEFAULT_MODE,
+  type Mode,
+} from "@/lib/modes";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
 
 const posts = postsJson as Post[];
 const CORPUS_PREFIX = buildCorpusPrefix(posts);
+
+// Built once at module load and reused for every request. This is BYTE-IDENTICAL
+// across all modes, personas, and users — that stability is what lets DeepSeek's
+// prompt cache hit on the ~400K-token corpus every time. The variable
+// mode/persona instruction lives in the user turn, never here. See
+// lib/systemPrompt.ts.
+const SYSTEM_MESSAGE = buildSystemMessage(CORPUS_PREFIX);
 
 const client = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -33,7 +42,9 @@ interface ErrorLogEntry {
 interface UsageLogEntry {
   timestamp: string;
   event: "deepseek_usage";
-  personality: PersonalityKey;
+  mode: Mode;
+  // Whether a persona was supplied, NOT its text — never log user input.
+  persona_kind: "preset" | "custom" | "none";
   cache_hit_tokens?: number;
   cache_miss_tokens?: number;
   completion_tokens?: number;
@@ -80,15 +91,18 @@ export async function POST(req: Request): Promise<Response> {
     return errorResponse(400, "Request body must be valid JSON.");
   }
 
-  const parsed = body as { question?: unknown; personality?: unknown } | null;
+  const parsed = body as
+    | { question?: unknown; mode?: unknown; persona?: unknown }
+    | null;
   const validated = validateQuestion(parsed?.question);
   if (!validated.ok) {
     return errorResponse(validated.status, validated.message);
   }
 
-  const personality: PersonalityKey = isPersonalityKey(parsed?.personality)
-    ? parsed.personality
-    : DEFAULT_PERSONALITY;
+  const mode: Mode = isMode(parsed?.mode) ? parsed.mode : DEFAULT_MODE;
+  const persona = parsed?.persona;
+  const persona_kind =
+    mode === "persona" ? resolvePersona(persona).kind : "none";
 
   if (process.env.KV_REST_API_URL) {
     try {
@@ -107,8 +121,10 @@ export async function POST(req: Request): Promise<Response> {
     }
   }
 
-  const systemMessage = buildSystemMessage(personality, CORPUS_PREFIX);
-  const userMessage = `<user_question>\n${validated.question}\n</user_question>`;
+  // System message is the cache-stable corpus + shared rules (built once at
+  // module load). The variable mode/persona instruction goes in the user turn.
+  const modeInstruction = buildModeInstruction({ mode, persona });
+  const userMessage = `${modeInstruction}\n\n<user_question>\n${validated.question}\n</user_question>`;
 
   let stream: AsyncIterable<unknown>;
   try {
@@ -118,7 +134,7 @@ export async function POST(req: Request): Promise<Response> {
       stream_options: { include_usage: true },
       max_tokens: 1500,
       messages: [
-        { role: "system", content: systemMessage },
+        { role: "system", content: SYSTEM_MESSAGE },
         { role: "user", content: userMessage },
       ],
     });
@@ -148,7 +164,8 @@ export async function POST(req: Request): Promise<Response> {
           }
           if (chunk.usage) {
             logUsage({
-              personality,
+              mode,
+              persona_kind,
               cache_hit_tokens: chunk.usage.prompt_cache_hit_tokens,
               cache_miss_tokens: chunk.usage.prompt_cache_miss_tokens,
               completion_tokens: chunk.usage.completion_tokens,
