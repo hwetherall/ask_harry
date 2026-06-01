@@ -11,7 +11,11 @@ import {
   resolvePersona,
   buildModeInstruction,
 } from "../lib/modes";
-import { buildSystemMessage, SHARED_RULES } from "../lib/systemPrompt";
+import {
+  buildSystemMessage,
+  SHARED_RULES,
+  OBSERVER_STANCE,
+} from "../lib/systemPrompt";
 import { HARRY_VOICE } from "../lib/harryVoice";
 
 const CORPUS =
@@ -155,8 +159,16 @@ describe("buildModeInstruction", () => {
 });
 
 describe("buildSystemMessage — cache invariant", () => {
-  it("is exactly corpus + shared rules", () => {
-    expect(buildSystemMessage(CORPUS)).toBe(`${CORPUS}\n\n${SHARED_RULES}`);
+  it("is exactly corpus + observer stance + shared rules", () => {
+    expect(buildSystemMessage(CORPUS)).toBe(
+      `${CORPUS}\n\n${OBSERVER_STANCE}\n\n${SHARED_RULES}`,
+    );
+  });
+
+  it("carries the observer stance (reflect, don't summarise)", () => {
+    const msg = buildSystemMessage(CORPUS);
+    expect(msg).toContain("not summarising a database");
+    expect(msg).toContain("Think across time");
   });
 
   it("contains no mode- or persona-specific text", () => {

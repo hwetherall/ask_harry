@@ -36,6 +36,8 @@ describe("buildCorpusPrefix", () => {
     expect(output).toBe(
       [
         "--- BLOG POSTS ---",
+        "=== 2023 ===",
+        "",
         "[2023-01-01] First post",
         "Hello world.",
         "",
@@ -53,7 +55,31 @@ describe("buildCorpusPrefix", () => {
   it("handles a single post", () => {
     const output = buildCorpusPrefix([FIXTURE[0]]);
     expect(output).toBe(
-      "--- BLOG POSTS ---\n[2023-01-01] First post\nHello world.\n--- END BLOG POSTS ---",
+      "--- BLOG POSTS ---\n=== 2023 ===\n\n[2023-01-01] First post\nHello world.\n--- END BLOG POSTS ---",
+    );
+  });
+
+  it("inserts a header per year when posts span multiple years", () => {
+    const multiYear: Post[] = [
+      { ...FIXTURE[0], date: "2024-12-31" },
+      { ...FIXTURE[1], date: "2025-01-01" },
+    ];
+    const output = buildCorpusPrefix(multiYear);
+    expect(output).toBe(
+      [
+        "--- BLOG POSTS ---",
+        "=== 2024 ===",
+        "",
+        "[2024-12-31] First post",
+        "Hello world.",
+        "",
+        "=== 2025 ===",
+        "",
+        "[2025-01-01] Second post",
+        "Another day.",
+        "With two lines.",
+        "--- END BLOG POSTS ---",
+      ].join("\n"),
     );
   });
 });

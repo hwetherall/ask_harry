@@ -12,10 +12,13 @@ import {
   type Mode,
 } from "@/lib/modes";
 
+// Reflective by design: shallow questions ("biggest interests?") teach users to
+// ask for summaries and get summaries back. These model the use case the tool is
+// actually good at — perception, change over time, the non-obvious.
 const EXAMPLES = [
-  "What are Harry's biggest interests?",
-  "What has Harry been cooking lately?",
-  "What's Harry been up to recently?",
+  "What does Harry keep coming back to?",
+  "How has Harry changed over the years?",
+  "What does Harry write about when something's bothering him?",
 ];
 
 export default function Page() {
