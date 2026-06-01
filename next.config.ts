@@ -10,6 +10,8 @@ if (!Array.isArray(posts) || posts.length < MIN_POSTS) {
   );
 }
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  transpilePackages: ["react-markdown"],
+};
 
 export default nextConfig;

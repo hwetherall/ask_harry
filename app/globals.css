@@ -40,8 +40,107 @@ h1 {
 
 .subtitle {
   color: var(--muted);
-  margin: 0 0 32px 0;
+  margin: 0 0 24px 0;
   font-size: 1rem;
+}
+
+.mode-toggle {
+  display: inline-flex;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  margin-bottom: 16px;
+  gap: 2px;
+}
+
+.mode-pill {
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mode-pill:hover:not(:disabled):not(.active) {
+  color: var(--fg);
+}
+
+.mode-pill.active {
+  background: var(--accent);
+  color: white;
+}
+
+.mode-pill:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.persona-picker {
+  margin: -4px 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.persona-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.persona-chip {
+  background: white;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.persona-chip:hover:not(:disabled):not(.active) {
+  border-color: var(--accent);
+}
+
+.persona-chip.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.persona-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.persona-custom {
+  width: 100%;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 0.92rem;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+}
+
+.persona-custom:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.persona-hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: -4px 0 12px 0;
 }
 
 form {
@@ -113,13 +212,54 @@ button:disabled {
   border-radius: 12px;
   padding: 20px 24px;
   margin-top: 8px;
-  white-space: pre-wrap;
   min-height: 60px;
 }
 
 .answer.error {
   border-color: var(--error);
   color: var(--error);
+}
+
+.answer .placeholder {
+  color: var(--muted);
+}
+
+.answer p {
+  margin: 0 0 0.75em 0;
+}
+
+.answer p:last-child {
+  margin-bottom: 0;
+}
+
+.answer ul,
+.answer ol {
+  margin: 0.5em 0 0.75em 0;
+  padding-left: 1.4em;
+}
+
+.answer li {
+  margin-bottom: 0.25em;
+}
+
+.answer strong {
+  font-weight: 600;
+}
+
+.answer em {
+  font-style: italic;
+}
+
+.answer a {
+  color: var(--accent);
+}
+
+.answer code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+  background: var(--accent-bg);
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .followups {
